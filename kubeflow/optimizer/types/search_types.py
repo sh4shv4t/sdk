@@ -14,6 +14,7 @@
 
 from dataclasses import dataclass
 from enum import Enum
+import math
 
 from kubeflow_katib_api import models as katib_models
 
@@ -21,6 +22,16 @@ import kubeflow.optimizer.constants.constants as constants
 
 
 # Search space distribution helpers
+def _validate_range(min: float, max: float, log: bool = False):
+    # Mirrors the OptimizationJob CRD validation rules in kubeflow/trainer.
+    if not (math.isfinite(min) and math.isfinite(max)):
+        raise ValueError("min and max must be finite numbers")
+    if log and min <= 0:
+        raise ValueError("min must be strictly greater than 0")
+    if min >= max:
+        raise ValueError("min must be strictly less than max")
+
+
 class Search:
     """Helper class for defining search space parameters."""
 
@@ -34,7 +45,11 @@ class Search:
 
         Returns:
             Katib ParameterSpec object.
+
+        Raises:
+            ValueError: If `min` is not strictly less than `max`.
         """
+        _validate_range(min, max)
         return katib_models.V1beta1ParameterSpec(
             parameterType=constants.DOUBLE_PARAMETER,
             feasibleSpace=katib_models.V1beta1FeasibleSpace(
@@ -52,7 +67,12 @@ class Search:
 
         Returns:
             Katib ParameterSpec object.
+
+        Raises:
+            ValueError: If `min` is not strictly greater than 0 or not strictly
+                less than `max`.
         """
+        _validate_range(min, max, log=True)
         return katib_models.V1beta1ParameterSpec(
             parameterType=constants.DOUBLE_PARAMETER,
             feasibleSpace=katib_models.V1beta1FeasibleSpace(
@@ -69,7 +89,12 @@ class Search:
 
         Returns:
             Katib ParameterSpec object.
+
+        Raises:
+            ValueError: If `values` is empty.
         """
+        if not values:
+            raise ValueError("values must have at least 1 item")
         return katib_models.V1beta1ParameterSpec(
             parameterType=constants.CATEGORICAL_PARAMETERS,
             feasibleSpace=katib_models.V1beta1FeasibleSpace(list=[str(v) for v in values]),

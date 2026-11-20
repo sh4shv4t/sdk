@@ -57,6 +57,12 @@ Choose from a fixed set of values:
 
 Best for: Batch size, number of layers, activation functions.
 
+.. note::
+
+   The helpers check their inputs and raise ``ValueError`` straight away: ``min`` must be
+   strictly less than ``max``, ``loguniform`` needs ``min > 0``, bounds must be finite, and
+   ``choice`` needs at least one value. These match the rules the OptimizationJob API enforces.
+
 Integer Range
 ^^^^^^^^^^^^^
 
